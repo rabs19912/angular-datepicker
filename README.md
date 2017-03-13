@@ -229,6 +229,20 @@ Then your final html:
 </div>
 ```
 
+### ATRIBUTO language
+
+determina el idioma en el que se mostraran los meses y dias en el calendario (actualmente solo en mobile)
+
+actualmente soporta solo dos lenguajes, ingles y espanio
+default : ingles.
+
+ejemplo 
+
+```html
+  <datepicker date-format="yyyy/MM/dd" datepicker-append-to="" language='spanish'>
+    <input ng-model="newBill.regaulardate " type="text" placeholder="Fecha" />
+  </datepicker>
+```
 
 ### Example
 
