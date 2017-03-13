@@ -110,7 +110,7 @@
           '<a href="javascript:void(0)" ng-repeat="px in prevMonthDays" class="_720kb-datepicker-calendar-day _720kb-datepicker-disabled">',
             '{{px}}',
           '</a>',
-          '<a href="javascript:void(0)" ng-repeat="item in days" ng-click="setDatepickerDay(item)" ng-class="{\'_720kb-datepicker-active\': selectedDay === item && selectedMonth === monthNumber && selectedYear === year, \'_720kb-datepicker-disabled\': !isSelectableMinDate(year + \'/\' + monthNumber + \'/\' + item ) || !isSelectableMaxDate(year + \'/\' + monthNumber + \'/\' + item) || !isSelectableDate(monthNumber, year, item),\'_720kb-datepicker-today\': item === today.getDate() && monthNumber === (today.getMonth() + 1) && year === today.getFullYear() && !selectedDay}" class="_720kb-datepicker-calendar-day">',
+          '<a href="javascript:void(0)" ng-repeat="item in days" ng-click="setDatepickerDay(item)" ng-class="{\'_720kb-datepicker-active\': selectedDay === item && selectedMonth === monthNumber && selectedYear === year, \'_720kb-datepicker-disabled\': !isSelectableMinDate(year + \'/\' + monthNumber + \'/\' + item ) || !isSelectableMaxDate(year + \'/\' + monthNumber + \'/\' + item) || !isSelectableDate(monthNumber, year, item)}" class="_720kb-datepicker-calendar-day">',
             '{{item}}',
           '</a>',
           '<a href="javascript:void(0)" ng-repeat="nx in nextMonthDays" class="_720kb-datepicker-calendar-day _720kb-datepicker-disabled">',
@@ -146,7 +146,8 @@
       var linkingFunction = function linkingFunction($scope, element, attr) {
 
         //get child input
-        var selector = attr.selector
+        var selector = attr.selector,
+          language = attr.language || 'english'
           , thisInput = angular.element(selector ? element[0].querySelector('.' + selector) : element[0].children[0])
           , theCalendar
           , defaultPrevButton = '<b class="_720kb-datepicker-default-button">&lang;</b>'
@@ -276,62 +277,6 @@
 
             $scope.year = Number($scope.year) + 1;
           }
-          , localDateTimestamp = function localDateTimestamp(rawDate, dateFormatDefinition) {
-            
-            var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|MMMM|MMM|MM|M|dd?d?|yy?yy?y?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g
-            ,formatDate,dateSplit, m, d, y, index, el, longName, shortName;
-
-            for (index = 0; index < datetime.MONTH.length; index += 1) {
-              longName = datetime.MONTH[index];
-              shortName = datetime.SHORTMONTH[index];
-
-              if (rawDate.indexOf(longName) !== -1) {
-                rawDate = rawDate.replace(longName, index + 1);
-                break;
-              }
-
-              if (rawDate.indexOf(shortName) !== -1) {
-                rawDate = rawDate.replace(shortName, index + 1);
-                break;
-              }              
-            }
-
-            dateSplit = rawDate
-              .split(/\D/)
-              .filter(function dateSplitFilter(item) {
-                return item.length > 0;
-              });
-
-            formatDate = dateFormatDefinition
-              .match(formattingTokens)
-              .filter(function fromatDateFilter(item) {
-                return item.match(/^[a-zA-Z]+$/i) !== null;
-              });
-
-            for (index = 0; index < formatDate.length; index += 1) {
-              el = formatDate[index];
-
-              switch (true) {
-                case el.indexOf('d') !== -1: {
-                  d = dateSplit[index];
-                  break;
-                }
-                case el.indexOf('M') !== -1: {
-                  m = dateSplit[index];
-                  break;
-                }
-                case el.indexOf('y') !== -1: {
-                  y = dateSplit[index];
-                  break; 
-                }
-                default: {
-                  break;  
-                }                                 
-              }
-            }
-
-            return new Date(y + '/' + m + '/' + d);
-          }
           , setInputValue = function setInputValue() {
 
             if ($scope.isSelectableMinDate($scope.year + '/' + $scope.monthNumber + '/' + $scope.day) &&
@@ -414,7 +359,6 @@
 
               classHelper.add(theCalendar, '_720kb-datepicker-open');
             }
-            $scope.today = new Date();
           }
           , checkToggle = function checkToggle() {
             if (!$scope.datepickerToggle) {
@@ -466,6 +410,7 @@
             }
           });
 
+       
         $scope.nextMonth = function nextMonth() {
 
           if ($scope.monthNumber === 12) {
@@ -675,8 +620,9 @@
                 thisInput[0].value.length > 0) {
 
                 try {
+
                   if (dateFormat) {
-                    date = localDateTimestamp(thisInput[0].value.toString(), dateFormat);
+                    date = new Date($filter('date')(thisInput[0].value.toString(), dateFormat));
                   } else {
                     date = new Date(thisInput[0].value.toString());
                   }
@@ -806,14 +752,34 @@
 
         // respect previously configured interpolation symbols.
         htmlTemplate = htmlTemplate.replace(/{{/g, $interpolate.startSymbol()).replace(/}}/g, $interpolate.endSymbol());
+        
+        var meses =  ['Enero', 'Febrero', 'Marzo', 'Abril',
+          'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']; // ARRAY MESES EN ESPANIOL
+        var months = datetime.MONTH;
+        var dias = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+
         $scope.dateMonthTitle = $scope.dateMonthTitle || 'Select month';
         $scope.dateYearTitle = $scope.dateYearTitle || 'Select year';
         $scope.buttonNextTitle = $scope.buttonNextTitle || 'Next';
         $scope.buttonPrevTitle = $scope.buttonPrevTitle || 'Prev';
         $scope.month = $filter('date')(date, 'MMMM');//december-November like
+        
+
+        // ***** TRADUCION DE MES ACTUAL *****
+        if (language == 'spanish') {
+          for (var i = 0; i < months.length; i++) {
+            if (months[i] === $scope.month) {
+              $scope.month = meses[i];
+            };
+          };
+        };
+
+        // ***** FIN TRADUCION DE MES ACTUAL *****
+
         $scope.monthNumber = Number($filter('date')(date, 'MM')); // 01-12 like
         $scope.day = Number($filter('date')(date, 'dd')); //01-31 like
         $scope.dateWeekStartDay = $scope.validateWeekDay($scope.dateWeekStartDay);
+
 
         if ($scope.dateMaxLimit) {
 
@@ -822,18 +788,29 @@
 
           $scope.year = Number($filter('date')(date, 'yyyy'));//2014 like
         }
-        $scope.months = datetime.MONTH;
+
+        // ***** TRADUCION DE MESES *****
+        $scope.months = language === 'spanish' ? meses : months;
+        // ***** FIN  TRADUCION DE MESES *****
+
 
         $scope.daysInString = [];
         for (n = $scope.dateWeekStartDay; n <= $scope.dateWeekStartDay + 6; n += 1) {
 
           $scope.daysInString.push(n % 7);
         }
-        $scope.daysInString = $scope.daysInString.map(function mappingFunc(el) {
 
-          return $filter('date')(new Date(new Date('06/08/2014').valueOf() + A_DAY_IN_MILLISECONDS * el), 'EEE');
-        });
 
+        // ***** TRADUCION DE DIAS *****
+        if (language === 'spanish') {
+          $scope.daysInString = dias;
+        } else {
+          $scope.daysInString = $scope.daysInString.map(function mappingFunc(el) {
+            return $filter('date')(new Date(new Date('06/08/2014').valueOf() + A_DAY_IN_MILLISECONDS * el), 'EEE');
+          });
+        };
+        // ***** FIN TRADUCION DE DIAS *****
+        
         //create the calendar holder and append where needed
         if ($scope.datepickerAppendTo &&
           $scope.datepickerAppendTo.indexOf('.') !== -1) {
